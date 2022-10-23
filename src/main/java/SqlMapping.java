@@ -19,6 +19,7 @@ public class SqlMapping {
     //sql이 사용하고 있는 테이블과 컬럼들을 저장
     private static HashMap<String, TableEntity> sqlContainsTableMap = new HashMap<>();
 
+
     public static void main(String[] args) {
         //메모장에서 sql 추출
         String sql = getSqlByTxt();
@@ -38,10 +39,34 @@ public class SqlMapping {
         findTableEntityAndInsert(words);
 
         //매핑 시작
-        executeMapping(sql, sqlContainsTableMap);
+        String mappedSql = executeMapping(sql, sqlContainsTableMap);
+
+        //메모장에 매핑한 sql 저장
+        saveTxtFile(mappedSql);
     }
 
-    public static void executeMapping(String sql, HashMap<String, TableEntity> map){
+    public static void saveTxtFile(String sql){
+        String text = sql;
+        String fileNm = "C:/sql-mapping/mapped-sql.txt";
+
+        try{
+            File file = new File(fileNm);
+
+            //경로에 똑같은 파일이 존재하면 삭제하고 다시 만들기
+            if(file.exists()){
+                file.delete();
+            }
+
+            FileWriter fileWrite = new FileWriter(file, true);
+            fileWrite.write(text);
+            fileWrite.flush();
+            fileWrite.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static String executeMapping(String sql, HashMap<String, TableEntity> map){
         String mappedSql = sql;
         TableEntity tableEntity = null;
         for(int i=0;i<words.size() ;i++){
@@ -59,7 +84,7 @@ public class SqlMapping {
                 }
             }
         }
-        System.out.println("COMPLETE:"+mappedSql);
+        return mappedSql;
     }
 
     public static void findTableEntityAndInsert(List<String> words){
@@ -84,6 +109,7 @@ public class SqlMapping {
                 word = "";
             }
         }
+
         return words;
     }
 
@@ -134,7 +160,7 @@ public class SqlMapping {
             br = new BufferedReader(new FileReader(note));
             for (String line = br.readLine(); line != null; line = br.readLine()) {
                 line = line.trim();
-                line+=" ";
+                line+=" \r\n";
                 sql += line;
             }
         } catch (FileNotFoundException e) {
