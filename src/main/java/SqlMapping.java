@@ -1,9 +1,7 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-import org.apache.poi.ss.usermodel.Table;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -18,6 +16,9 @@ public class SqlMapping {
     
     //sql이 사용하고 있는 테이블과 컬럼들을 저장
     private static HashMap<String, TableEntity> sqlContainsTableMap = new HashMap<>();
+
+    //컬럼명 Camel Case 용으로 저장하는 셋, TreeSet으로 sorting
+    private static Set<String> CamelCaseColNmSet = new TreeSet<>();
 
 
     public static void main(String[] args) {
@@ -45,27 +46,49 @@ public class SqlMapping {
         saveTxtFile(mappedSql);
     }
 
+    //매핑한 sql과 camel case를 메모장으로 저장
     public static void saveTxtFile(String sql){
-        String text = sql;
+        //query
+        String query = sql;
         String fileNm = "C:/sql-mapping/mapped-sql.txt";
+
+        //camel case
+        String camelCaseStr = setToPlainString();
+        String camelCaseFileNm = "C:/sql-mapping/camel-case.txt";
 
         try{
             File file = new File(fileNm);
+            File file2 = new File(camelCaseFileNm);
 
             //경로에 똑같은 파일이 존재하면 삭제하고 다시 만들기
-            if(file.exists()){
+            if(file.exists() || file2.exists()){
                 file.delete();
+                file2.delete();
             }
 
-            FileWriter fileWrite = new FileWriter(file, true);
-            fileWrite.write(text);
-            fileWrite.flush();
-            fileWrite.close();
+            FileWriter fileWrite1 = new FileWriter(file, true);
+            fileWrite1.write(query);
+            fileWrite1.flush();
+
+            FileWriter fileWrite2 = new FileWriter(file2, true);
+            fileWrite2.write(camelCaseStr);
+            fileWrite2.flush();
+
+            fileWrite2.close();
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
+    public static String setToPlainString(){
+        String str = "";
+        for(String colNm : CamelCaseColNmSet){
+            str+=colNm+"\r\n";
+        }
+        return str;
+    }
+
+    //매핑
     public static String executeMapping(String sql, HashMap<String, TableEntity> map){
         String mappedSql = sql;
         TableEntity tableEntity = null;
@@ -75,6 +98,7 @@ public class SqlMapping {
                 tableEntity = map.get(strKey);
                 //컬럼명 매핑
                 if(tableEntity.getColumnMappingMap().containsKey(words.get(i))){
+                    colNmToCamelCase(words.get(i));
                     mappedSql = mappedSql.replaceAll(words.get(i),tableEntity.getColumnMappingMap().get(words.get(i)).getToBeLogicalColName());
                 }
 
@@ -85,6 +109,17 @@ public class SqlMapping {
             }
         }
         return mappedSql;
+    }
+
+    public static void colNmToCamelCase(String colNm){
+        String[] strArr = colNm.split("-");
+        strArr[0] = strArr[0].toLowerCase();
+        for(int i=1; i<strArr.length; i++){
+            strArr[i] = StringUtils.capitalize(StringUtils.lowerCase(strArr[i]));
+        }
+        String camelCaseColNm = String.join("", strArr);
+
+        CamelCaseColNmSet.add(camelCaseColNm);
     }
 
     public static void findTableEntityAndInsert(List<String> words){
@@ -100,7 +135,8 @@ public class SqlMapping {
         String word = "";
 
         for(int i=0;i<sql.length();i++){
-            if(Character.isLetter(sql.charAt(i)) || sql.charAt(i) == 45 || Character.isDigit(sql.charAt(i))){
+            //ascii code 45 : "-", 95 : "_"
+            if(Character.isLetter(sql.charAt(i)) || sql.charAt(i) == 45 || Character.isDigit(sql.charAt(i)) || sql.charAt(i) == 95){
                 word+=Character.toString(sql.charAt(i));
             }else{
                 if(word.length() > 1)
