@@ -10,8 +10,13 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class SqlMapping {
+    //엑셀에 있는 모든 테이블과 컬럼들을 저장
     private static HashMap<String, TableEntity> tableMap=new HashMap<>();
+    
+    //sql를 단어로 쪼갠 리스트
     private static List<String> words = new ArrayList<>();
+    
+    //sql이 사용하고 있는 테이블과 컬럼들을 저장
     private static HashMap<String, TableEntity> sqlContainsTableMap = new HashMap<>();
 
     public static void main(String[] args) {
