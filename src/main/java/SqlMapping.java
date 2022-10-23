@@ -98,7 +98,7 @@ public class SqlMapping {
                 tableEntity = map.get(strKey);
                 //컬럼명 매핑
                 if(tableEntity.getColumnMappingMap().containsKey(words.get(i))){
-                    colNmToCamelCase(words.get(i));
+                    colNmToCamelCase(tableEntity.getColumnMappingMap().get(words.get(i)).getToBeLogicalColName());
                     mappedSql = mappedSql.replaceAll(words.get(i),tableEntity.getColumnMappingMap().get(words.get(i)).getToBeLogicalColName());
                 }
 
@@ -112,7 +112,7 @@ public class SqlMapping {
     }
 
     public static void colNmToCamelCase(String colNm){
-        String[] strArr = colNm.split("-");
+        String[] strArr = colNm.split("_");
         strArr[0] = strArr[0].toLowerCase();
         for(int i=1; i<strArr.length; i++){
             strArr[i] = StringUtils.capitalize(StringUtils.lowerCase(strArr[i]));
